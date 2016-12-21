@@ -1,10 +1,11 @@
 #include "Expression.h"
 #include <ctype.h>
 #include <stdexcept>
+#include <memory>
 
-void ParseAtom(Expression &expr, std::string &str);
-void ParseMulDiv(Expression &expr, std::string &str);
-void ParseAddSub(Expression &expr, std::string &str);
+Expression *ParseAtom(std::string &str);
+Expression *ParseMulDiv(std::string &str);
+Expression *ParseAddSub(std::string &str);
 
 void SkipSpaces(std::string &expression)
 {
@@ -63,45 +64,84 @@ bool ParseOperator(std::string &expression, Operation &op)
         op = Operation::NOP; break;
     }
 
-    return (op == Operation::NOP);
+    expression = expression.substr(1);
+
+    return (op != Operation::NOP);
 }
 
-void ParseAddSub(Expression &expr, std::string &str)
+Expression *ParseAddSub(std::string &str)
 {
-    (void)expr;
     (void)str;
+    return nullptr;
 }
 
-void ParseMulDiv(Expression &expr, std::string &str)
+Expression *ParseMulDiv(std::string &str)
 {
-    (void)expr;
-    (void)str;
-}
-
-void ParseAtom(Expression &expr, std::string &str)
-{
-    if (!ParseDouble(str, expr.value))
+    Expression *left = ParseAtom(str);
+    Operation op = Operation::NOP;
+    if (!ParseOperator(str, op))
     {
+        return left;
+    }
+
+    switch (op)
+    {
+    case Operation::MUL:
+    case Operation::DIV:
+    case Operation::MOD:
+        break;
+    default:
+        return left;
+    }
+
+    Expression *right = nullptr;
+    try
+    {
+        right = ParseAtom(str);
+    }
+    catch (...)
+    {
+        DisposeExpression(left);
+        throw;
+    }
+
+    try
+    {
+        Expression *expr = new Expression;
+        expr->pLeft = left;
+        expr->pRight = right;
+        expr->op = op;
+        return expr;
+    }
+    catch (...)
+    {
+        DisposeExpression(left);
+        DisposeExpression(right);
+        throw;
+    }
+}
+
+Expression *ParseAtom(std::string &str)
+{
+    Expression *expr = new Expression;
+    if (!ParseDouble(str, expr->value))
+    {
+        DisposeExpression(expr);
         throw std::invalid_argument("Expected number at: " + str);
     }
+    return expr;
 }
 
 Expression *CreateExpression(const std::string &expression)
 {
-    std::string remainingExpr = expression;
+    std::string remainingStr = expression;
+    Expression *pExpr = ParseMulDiv(remainingStr);
 
-    Expression *pExpr = new Expression;
-    if (expression == "25 + 17 / 45 / 2")
+    SkipSpaces(remainingStr); // just to ensure
+    if (!remainingStr.empty())
     {
-        pExpr->value = 25.18888888888889;
-    }
-    else
-    {
-        double result = 0;
-        if (ParseDouble(remainingExpr, result))
-        {
-            pExpr->value = result;
-        }
+        const auto message = "Unexpected symbol at: " + remainingStr;
+        throw std::runtime_error(message);
     }
 
     return pExpr;
