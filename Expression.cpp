@@ -80,47 +80,52 @@ Expression *ParseAddSub(std::string &str)
 Expression *ParseMulDiv(std::string &str)
 {
     Expression *left = ParseAtom(str);
-    Operation op = Operation::NOP;
-    if (!ParseOperator(str, op))
+    while (true)
     {
-        return left;
+        Operation op = Operation::NOP;
+        if (!ParseOperator(str, op))
+        {
+            return left;
+        }
+
+        switch (op)
+        {
+        case Operation::MUL:
+        case Operation::DIV:
+        case Operation::MOD:
+            break;
+        default:
+            return left;
+        }
+
+        Expression *right = nullptr;
+        try
+        {
+            right = ParseAtom(str);
+        }
+        catch (...)
+        {
+            DisposeExpression(left);
+            throw;
+        }
+
+        try
+        {
+            Expression *expr = new Expression;
+            expr->pLeft = left;
+            expr->pRight = right;
+            expr->op = op;
+            left = expr;
+        }
+        catch (...)
+        {
+            DisposeExpression(left);
+            DisposeExpression(right);
+            throw;
+        }
     }
 
-    switch (op)
-    {
-    case Operation::MUL:
-    case Operation::DIV:
-    case Operation::MOD:
-        break;
-    default:
-        return left;
-    }
-
-    Expression *right = nullptr;
-    try
-    {
-        right = ParseMulDiv(str);
-    }
-    catch (...)
-    {
-        DisposeExpression(left);
-        throw;
-    }
-
-    try
-    {
-        Expression *expr = new Expression;
-        expr->pLeft = left;
-        expr->pRight = right;
-        expr->op = op;
-        return expr;
-    }
-    catch (...)
-    {
-        DisposeExpression(left);
-        DisposeExpression(right);
-        throw;
-    }
+    return left;
 }
 
 Expression *ParseAtom(std::string &str)
