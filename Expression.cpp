@@ -73,8 +73,56 @@ bool ParseOperator(std::string &expression, Operation &op)
 
 Expression *ParseAddSub(std::string &str)
 {
-    (void)str;
-    return nullptr;
+    Expression *left = ParseMulDiv(str);
+    while (true)
+    {
+        Operation op = Operation::NOP;
+
+        // Don't remove operator from remaining string
+        //  when this operator remains unhandled.
+        std::string remainingStr = str;
+        if (!ParseOperator(remainingStr, op))
+        {
+            return left;
+        }
+        switch (op)
+        {
+        case Operation::ADD:
+        case Operation::SUB:
+            break;
+        default:
+            return left;
+        }
+        str = remainingStr;
+
+        Expression *right = nullptr;
+        try
+        {
+            right = ParseMulDiv(str);
+        }
+        catch (...)
+        {
+            DisposeExpression(left);
+            throw;
+        }
+
+        try
+        {
+            Expression *expr = new Expression;
+            expr->pLeft = left;
+            expr->pRight = right;
+            expr->op = op;
+            left = expr;
+        }
+        catch (...)
+        {
+            DisposeExpression(left);
+            DisposeExpression(right);
+            throw;
+        }
+    }
+
+    return left;
 }
 
 Expression *ParseMulDiv(std::string &str)
@@ -83,11 +131,14 @@ Expression *ParseMulDiv(std::string &str)
     while (true)
     {
         Operation op = Operation::NOP;
-        if (!ParseOperator(str, op))
+
+        // Don't remove operator from remaining string
+        //  when this operator remains unhandled.
+        std::string remainingStr = str;
+        if (!ParseOperator(remainingStr, op))
         {
             return left;
         }
-
         switch (op)
         {
         case Operation::MUL:
@@ -97,6 +148,7 @@ Expression *ParseMulDiv(std::string &str)
         default:
             return left;
         }
+        str = remainingStr;
 
         Expression *right = nullptr;
         try
@@ -142,7 +194,7 @@ Expression *ParseAtom(std::string &str)
 Expression *CreateExpression(const std::string &expression)
 {
     std::string remainingStr = expression;
-    Expression *pExpr = ParseMulDiv(remainingStr);
+    Expression *pExpr = ParseAddSub(remainingStr);
 
     SkipSpaces(remainingStr); // just to ensure
     if (!remainingStr.empty())
