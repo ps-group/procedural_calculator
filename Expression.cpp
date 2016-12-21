@@ -2,6 +2,8 @@
 #include <ctype.h>
 #include <stdexcept>
 #include <memory>
+#include <math.h>
+#include <assert.h>
 
 Expression *ParseAtom(std::string &str);
 Expression *ParseMulDiv(std::string &str);
@@ -97,7 +99,7 @@ Expression *ParseMulDiv(std::string &str)
     Expression *right = nullptr;
     try
     {
-        right = ParseAtom(str);
+        right = ParseMulDiv(str);
     }
     catch (...)
     {
@@ -149,6 +151,37 @@ Expression *CreateExpression(const std::string &expression)
 
 double CalculateExpression(Expression *pExpr)
 {
+    if (pExpr->op == Operation::NOP)
+    {
+        return pExpr->value;
+    }
+    assert(pExpr->pLeft);
+    assert(pExpr->pRight);
+    CalculateExpression(pExpr->pLeft);
+    CalculateExpression(pExpr->pRight);
+
+    switch (pExpr->op)
+    {
+    case Operation::ADD:
+        pExpr->value = pExpr->pLeft->value + pExpr->pRight->value;
+        break;
+    case Operation::SUB:
+        pExpr->value = pExpr->pLeft->value - pExpr->pRight->value;
+        break;
+    case Operation::MUL:
+        pExpr->value = pExpr->pLeft->value * pExpr->pRight->value;
+        break;
+    case Operation::DIV:
+        pExpr->value = pExpr->pLeft->value / pExpr->pRight->value;
+        break;
+    case Operation::MOD:
+        pExpr->value = fmod(pExpr->pLeft->value, pExpr->pRight->value);
+        break;
+    case Operation::NOP:
+        assert(false);
+        break;
+    }
+
     return pExpr->value;
 }
 
