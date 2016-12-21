@@ -13,8 +13,15 @@ double Calculate(const std::string &expression)
 
 void PrintExpressionResult(const std::string &expression)
 {
-    const double result = Calculate(expression);
-    std::cout << expression << " = " << result << std::endl;
+    try
+    {
+        const double result = Calculate(expression);
+        std::cout << "'" << expression << "' = " << result << std::endl;
+    }
+    catch (const std::exception &ex)
+    {
+        std::cerr << "Error: " << ex.what();
+    }
 }
 
 int main(int argc, char *argv[])
@@ -22,6 +29,8 @@ int main(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
+    PrintExpressionResult("404");
+    PrintExpressionResult("   404");
     PrintExpressionResult("25 + 17 / 45 / 2");
     PrintExpressionResult("42 + 42 / 2 * 2");
 
