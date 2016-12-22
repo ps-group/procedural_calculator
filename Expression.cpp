@@ -20,37 +20,44 @@ void SkipSpaces(std::string &expression)
     expression = expression.substr(numSize);
 }
 
-// Разбирает до первого нечислового символа
+// Skips spaces, then reads until first non-digit character.
+// If successful, removes read characters from `expression`
+//  and returns true.
 bool ParseDouble(std::string &expression, double &result)
 {
-    SkipSpaces(expression);
+    std::string remainingStr = expression;
+    SkipSpaces(remainingStr);
 
     size_t numSize = 0;
-    if (expression.size() > 0 && isdigit(expression[0]))
+    if (remainingStr.size() > 0 && isdigit(remainingStr[0]))
     {
-        while (numSize < expression.size()
-               && isdigit(expression[numSize]))
+        while (numSize < remainingStr.size()
+               && isdigit(remainingStr[numSize]))
         {
             ++numSize;
         }
-        result = std::stod(expression.substr(0, numSize));
-        expression = expression.substr(numSize);
+        result = std::stod(remainingStr.substr(0, numSize));
+        expression = remainingStr.substr(numSize);
         return true;
     }
 
     return false;
 }
 
+// Skips spaces, then reads next operator symbol.
+// If successful, removes read characters from `expression`
+//  and returns true.
 bool ParseOperator(std::string &expression, Operation &op)
 {
-    SkipSpaces(expression);
-    if (expression.empty())
+    std::string remainingStr = expression;
+    SkipSpaces(remainingStr);
+    if (remainingStr.empty())
     {
         op = Operation::NOP;
         return false;
     }
 
-    switch (expression[0])
+    switch (remainingStr[0])
     {
     case '+':
         op = Operation::ADD; break;
@@ -66,11 +73,16 @@ bool ParseOperator(std::string &expression, Operation &op)
         op = Operation::NOP; break;
     }
 
-    expression = expression.substr(1);
-
-    return (op != Operation::NOP);
+    const bool succeed = (op != Operation::NOP);
+    if (succeed)
+    {
+        expression = remainingStr.substr(1);
+    }
+    return succeed;
 }
 
+// Parses expressions like: `a`, `a+b±...`, `a-b±...`,
+//  where each sub-expression parsed by `ParseMulDiv`.
 Expression *ParseAddSub(std::string &str)
 {
     Expression *left = ParseMulDiv(str);
@@ -125,6 +137,8 @@ Expression *ParseAddSub(std::string &str)
     return left;
 }
 
+// Parses expressions like: `a`, `a*b...`, `a/b...`, `a%b...`
+//  where each sub-expression parsed by `ParseAtom`.
 Expression *ParseMulDiv(std::string &str)
 {
     Expression *left = ParseAtom(str);
@@ -180,6 +194,7 @@ Expression *ParseMulDiv(std::string &str)
     return left;
 }
 
+// Parses atom expression, like a number.
 Expression *ParseAtom(std::string &str)
 {
     Expression *expr = new Expression;

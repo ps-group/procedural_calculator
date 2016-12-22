@@ -30,11 +30,12 @@ int main(int argc, char *argv[])
     (void)argv;
 
     PrintExpressionResult("404");
-    PrintExpressionResult("   404");
+    PrintExpressionResult("   404  ");
     PrintExpressionResult("3 * 3 * 3");
     PrintExpressionResult("12 / 12 / 12");
     PrintExpressionResult("25 + 17 / 45 / 2");
     PrintExpressionResult("42 + 42 / 2 * 2");
+    PrintExpressionResult(" 4 * 4 + 3 * 3 + 2 * 2 ");
 
     return 0;
 }
